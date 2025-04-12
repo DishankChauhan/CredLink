@@ -9,7 +9,7 @@ VerifyChain is a decentralized application for verifying educational and profess
 - Manage credential issuers (add/remove)
 - Revoke credentials when necessary
 - View user credentials history
-- Mumbai testnet integration
+- Sepolia testnet integration
 
 ## Setup Instructions
 
@@ -17,8 +17,8 @@ VerifyChain is a decentralized application for verifying educational and profess
 
 - Node.js (v16+)
 - npm or yarn
-- MetaMask wallet with Mumbai testnet configured
-- Mumbai testnet MATIC tokens for gas fees
+- MetaMask wallet with Sepolia testnet configured
+- Sepolia testnet ETH tokens for gas fees (available from faucets)
 
 ### Installation
 
@@ -40,14 +40,19 @@ VerifyChain is a decentralized application for verifying educational and profess
      ```
      cp .env.example .env.local
      ```
-   - Fill in your environment variables in `.env.local`
+   - Fill in your environment variables in `.env.local`:
+     - PRIVATE_KEY: Your wallet's private key (never commit this!)
+     - ALCHEMY_API_KEY: Create one at https://www.alchemy.com/
+     - ETHERSCAN_API_KEY: Get one from https://etherscan.io/myapikey
+     - Firebase credentials (if using Firebase)
 
 4. Contract deployment (if needed):
    ```
    npx hardhat compile
-   npx hardhat run scripts/deploy.ts --network mumbai
+   npx hardhat run scripts/deploy-sepolia.js --network sepolia
    ```
    - After deployment, update your `.env.local` with the new contract address
+   - A contract is already deployed at: `0x78c5a4e2Fd106dB3BcD852c6A3Db22881F83EF9B`
 
 5. Start the development server:
    ```
@@ -60,7 +65,10 @@ VerifyChain is a decentralized application for verifying educational and profess
 
 ## Smart Contract
 
-The application uses the `CredentialRegistry` smart contract deployed on the Mumbai testnet. The contract address should be specified in your `.env.local` file as `NEXT_PUBLIC_CONTRACT_ADDRESS`.
+The application uses the `CredentialRegistry` smart contract deployed on the Sepolia testnet. The contract address should be specified in your `.env.local` file as `NEXT_PUBLIC_CONTRACT_ADDRESS`.
+
+### Current Deployment
+The contract is currently deployed on Sepolia at `0x78c5a4e2Fd106dB3BcD852c6A3Db22881F83EF9B` and verified on [Etherscan](https://sepolia.etherscan.io/address/0x78c5a4e2Fd106dB3BcD852c6A3Db22881F83EF9B).
 
 ### Contract Features
 - Register and manage credential issuers
@@ -89,6 +97,13 @@ The application uses the `CredentialRegistry` smart contract deployed on the Mum
 - The web3 integration is handled in `src/utils/web3.ts`
 - UI components are located in `src/components`
 - Pages are defined in `src/pages`
+
+## Security Notes
+
+- **NEVER commit your `.env` or `.env.local` files** - they contain sensitive keys
+- **NEVER share your private key** with anyone
+- Both `.env` and `.env.local` are already added to `.gitignore`
+- The contract owner has admin privileges - keep the owner's private key secure
 
 ## License
 
