@@ -130,22 +130,22 @@ let credentialRegistryContract: ethers.Contract | null = null;
 // Contract address from environment variable
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '';
 
-// Network details for Mumbai testnet
-const MUMBAI_CHAIN_ID = '80001';
-const MUMBAI_RPC_URL = 'https://polygon-mumbai.g.alchemy.com/v2/';
-const MUMBAI_DETAILS = {
-  chainId: MUMBAI_CHAIN_ID,
-  chainName: 'Polygon Mumbai',
+// Network details for Sepolia testnet
+const SEPOLIA_CHAIN_ID = '11155111';
+const SEPOLIA_RPC_URL = 'https://eth-sepolia.g.alchemy.com/v2/' + process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
+const SEPOLIA_DETAILS = {
+  chainId: `0x${parseInt(SEPOLIA_CHAIN_ID).toString(16)}`,
+  chainName: 'Sepolia',
   nativeCurrency: {
-    name: 'MATIC',
-    symbol: 'MATIC',
+    name: 'ETH',
+    symbol: 'ETH',
     decimals: 18
   },
-  rpcUrls: ['https://polygon-mumbai.g.alchemy.com/v2/'],
-  blockExplorerUrls: ['https://mumbai.polygonscan.com/']
+  rpcUrls: [SEPOLIA_RPC_URL],
+  blockExplorerUrls: ['https://sepolia.etherscan.io/']
 };
 
-export async function connectWallet(switchToMumbai = true) {
+export async function connectWallet(switchToSepolia = true) {
   if (typeof window !== 'undefined' && window.ethereum) {
     try {
       // Request account access
@@ -155,27 +155,30 @@ export async function connectWallet(switchToMumbai = true) {
       const network = await provider.getNetwork();
       const chainId = network.chainId.toString();
       
-      // If we need to switch to Mumbai and we're not on it
-      if (switchToMumbai && chainId !== MUMBAI_CHAIN_ID) {
+      // If we need to switch to Sepolia and we're not on it
+      if (switchToSepolia && chainId !== SEPOLIA_CHAIN_ID) {
         try {
-          // Try to switch to Mumbai
+          // Try to switch to Sepolia
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
-            params: [{ chainId: `0x${parseInt(MUMBAI_CHAIN_ID).toString(16)}` }],
+            params: [{ chainId: `0x${parseInt(SEPOLIA_CHAIN_ID).toString(16)}` }],
           });
         } catch (switchError: any) {
           // This error code indicates that the chain has not been added to MetaMask
           if (switchError.code === 4902) {
             try {
+              console.log("Adding Sepolia network to wallet...", SEPOLIA_DETAILS);
               await window.ethereum.request({
                 method: 'wallet_addEthereumChain',
-                params: [MUMBAI_DETAILS],
+                params: [SEPOLIA_DETAILS],
               });
-            } catch (addError) {
-              throw new Error("Failed to add Mumbai network to wallet");
+            } catch (addError: any) {
+              console.error("Failed to add Sepolia network:", addError);
+              throw new Error(`Failed to add Sepolia network to wallet: ${addError.message || 'Unknown error'}`);
             }
           } else {
-            throw new Error("Failed to switch to Mumbai network");
+            console.error("Failed to switch to Sepolia network:", switchError);
+            throw new Error(`Failed to switch to Sepolia network: ${switchError.message || 'Unknown error'}`);
           }
         }
         
@@ -190,11 +193,11 @@ export async function connectWallet(switchToMumbai = true) {
         address: await signer.getAddress(),
         chainId: (await provider.getNetwork()).chainId.toString()
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error connecting to wallet", error);
       return { 
         success: false, 
-        error: "Failed to connect to wallet" 
+        error: error.message || "Failed to connect to wallet" 
       };
     }
   } else {
@@ -339,5 +342,31 @@ export async function checkIfRegisteredIssuer(address: string) {
   } catch (error) {
     console.error("Error checking if address is a registered issuer", error);
     return { success: false, error: "Failed to check if address is a registered issuer" };
+  }
+}
+
+// Function to get the contract instance
+export async function getCredentialContract(): Promise<ethers.Contract | null> {
+  try {
+    if (!provider || !signer) {
+      await connectWallet();
+    }
+    
+    if (!provider || !signer) {
+      throw new Error("Failed to connect wallet");
+    }
+    
+    if (!credentialRegistryContract) {
+      credentialRegistryContract = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        CredentialRegistryABI.abi,
+        signer
+      );
+    }
+    
+    return credentialRegistryContract;
+  } catch (error) {
+    console.error("Error getting contract instance:", error);
+    return null;
   }
 } 
