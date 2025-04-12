@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VerifyChain - Blockchain Resume Verification System
 
-## Getting Started
+VerifyChain is a decentralized application for verifying educational and professional credentials using blockchain technology.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Issue verifiable credentials on the blockchain
+- Verify credentials using unique credential IDs
+- Manage credential issuers (add/remove)
+- Revoke credentials when necessary
+- View user credentials history
+- Mumbai testnet integration
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup Instructions
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Node.js (v16+)
+- npm or yarn
+- MetaMask wallet with Mumbai testnet configured
+- Mumbai testnet MATIC tokens for gas fees
 
-## Learn More
+### Installation
 
-To learn more about Next.js, take a look at the following resources:
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/verify-chain.git
+   cd verify-chain
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. Install dependencies:
+   ```
+   npm install
+   # or
+   yarn install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Environment configuration:
+   - Copy `.env.example` to `.env.local`:
+     ```
+     cp .env.example .env.local
+     ```
+   - Fill in your environment variables in `.env.local`
 
-## Deploy on Vercel
+4. Contract deployment (if needed):
+   ```
+   npx hardhat compile
+   npx hardhat run scripts/deploy.ts --network mumbai
+   ```
+   - After deployment, update your `.env.local` with the new contract address
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5. Start the development server:
+   ```
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+6. Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
+
+## Smart Contract
+
+The application uses the `CredentialRegistry` smart contract deployed on the Mumbai testnet. The contract address should be specified in your `.env.local` file as `NEXT_PUBLIC_CONTRACT_ADDRESS`.
+
+### Contract Features
+- Register and manage credential issuers
+- Issue verifiable credentials on-chain
+- Verify credential authenticity
+- Revoke credentials when necessary
+- Track credential ownership and history
+
+## Using the Application
+
+### For Issuers:
+- Register as an issuer (requires admin approval)
+- Create and issue verifiable credentials
+- Revoke credentials when necessary
+
+### For Credential Holders:
+- Connect wallet to view your credentials
+- Share credential IDs for verification
+
+### For Verifiers:
+- Verify credentials using credential IDs
+- Check issuer registration status
+
+## Development
+
+- The web3 integration is handled in `src/utils/web3.ts`
+- UI components are located in `src/components`
+- Pages are defined in `src/pages`
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
