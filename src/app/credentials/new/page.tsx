@@ -19,7 +19,8 @@ export default function NewCredential() {
     issuer: string;
     dateIssued: string;
     description: string;
-    file?: File;
+    files?: File[];
+    documentUrls?: string[];
   }) => {
     setLoading(true);
     setError('');
@@ -44,8 +45,9 @@ export default function NewCredential() {
         userAddress: currentUser.walletAddress || '',
         status: 'pending',
         createdAt: Date.now(),
-        updatedAt: Date.now()
-      }, credential.file);
+        updatedAt: Date.now(),
+        documentUrl: credential.documentUrls ? credential.documentUrls[0] : undefined
+      });
       
       setSuccess(true);
       setTimeout(() => {

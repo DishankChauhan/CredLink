@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { uploadFile } from '@/utils/fileUpload';
+import { uploadMultipleFiles } from '@/utils/fileUpload';
 
 type CredentialType = 'education' | 'certificate' | 'experience';
 
@@ -12,8 +12,8 @@ type CredentialFormProps = {
     issuer: string;
     dateIssued: string;
     description: string;
-    file?: File;
-    documentUrl?: string;
+    files?: File[];
+    documentUrls?: string[];
   }) => void;
   initialData?: Partial<{
     type: CredentialType;
@@ -21,7 +21,7 @@ type CredentialFormProps = {
     issuer: string;
     dateIssued: string;
     description: string;
-    documentUrl?: string;
+    documentUrls?: string[];
   }>;
 };
 
@@ -31,8 +31,8 @@ export default function CredentialForm({ onSubmit, initialData }: CredentialForm
   const [issuer, setIssuer] = useState(initialData?.issuer || '');
   const [dateIssued, setDateIssued] = useState(initialData?.dateIssued || '');
   const [description, setDescription] = useState(initialData?.description || '');
-  const [file, setFile] = useState<File | null>(null);
-  const [existingFileUrl, setExistingFileUrl] = useState(initialData?.documentUrl || '');
+  const [files, setFiles] = useState<File[]>([]);
+  const [existingFileUrls, setExistingFileUrls] = useState<string[]>(initialData?.documentUrls || []);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState('');
@@ -51,15 +51,15 @@ export default function CredentialForm({ onSubmit, initialData }: CredentialForm
     setIsLoading(true);
     
     try {
-      let documentUrl = existingFileUrl;
+      let documentUrls = [...existingFileUrls];
       
-      // If a new file is selected, upload it
-      if (file) {
+      // If new files are selected, upload them
+      if (files.length > 0) {
         setIsUploading(true);
         
-        // Upload file to Firebase Storage
+        // Upload files to Firebase Storage
         try {
-          // Simulate upload progress (we can't track actual progress easily with Firebase JS SDK)
+          // Simulate upload progress
           const progressInterval = setInterval(() => {
             setUploadProgress(prev => {
               if (prev >= 90) clearInterval(progressInterval);
@@ -67,12 +67,13 @@ export default function CredentialForm({ onSubmit, initialData }: CredentialForm
             });
           }, 300);
           
-          documentUrl = await uploadFile(file);
+          const uploadedUrls = await uploadMultipleFiles(files);
+          documentUrls = [...documentUrls, ...uploadedUrls];
           
           clearInterval(progressInterval);
           setUploadProgress(100);
         } catch (error: any) {
-          setUploadError(error.message || 'Failed to upload document');
+          setUploadError(error.message || 'Failed to upload documents');
           setIsLoading(false);
           return;
         } finally {
@@ -86,8 +87,8 @@ export default function CredentialForm({ onSubmit, initialData }: CredentialForm
         issuer,
         dateIssued,
         description,
-        file: file || undefined,
-        documentUrl,
+        files: files.length > 0 ? files : undefined,
+        documentUrls: documentUrls.length > 0 ? documentUrls : undefined,
       });
       
       // Reset form after submission
@@ -96,11 +97,11 @@ export default function CredentialForm({ onSubmit, initialData }: CredentialForm
       setIssuer('');
       setDateIssued('');
       setDescription('');
-      setFile(null);
+      setFiles([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-      setExistingFileUrl('');
+      setExistingFileUrls([]);
       setUploadProgress(0);
       setUploadError('');
     } catch (error) {
@@ -286,38 +287,64 @@ export default function CredentialForm({ onSubmit, initialData }: CredentialForm
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Supporting Document
+            Supporting Documents
           </label>
           
-          {existingFileUrl && !file && (
-            <div className="mb-2 flex items-center">
-              <a 
-                href={existingFileUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-indigo-600 hover:text-indigo-800 underline mr-2"
-              >
-                View Existing Document
-              </a>
-              <button
-                type="button"
-                onClick={() => setExistingFileUrl('')}
-                className="text-red-600 hover:text-red-800 text-sm"
-              >
-                (Remove)
-              </button>
+          {existingFileUrls.length > 0 && (
+            <div className="mb-2">
+              <p className="text-sm font-medium text-gray-700 mb-1">Existing Documents:</p>
+              {existingFileUrls.map((url, index) => (
+                <div key={index} className="flex items-center mb-1">
+                  <a 
+                    href={url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:text-indigo-800 underline mr-2 text-sm"
+                  >
+                    Document {index + 1}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updatedUrls = [...existingFileUrls];
+                      updatedUrls.splice(index, 1);
+                      setExistingFileUrls(updatedUrls);
+                    }}
+                    className="text-red-600 hover:text-red-800 text-xs"
+                  >
+                    (Remove)
+                  </button>
+                </div>
+              ))}
             </div>
           )}
           
           <input
             ref={fileInputRef}
             type="file"
-            onChange={(e) => e.target.files && setFile(e.target.files[0])}
+            onChange={(e) => {
+              if (e.target.files) {
+                const filesArray = Array.from(e.target.files);
+                setFiles(filesArray);
+              }
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
             disabled={isUploading}
+            multiple
           />
-          <p className="mt-1 text-xs text-gray-500">Supported formats: PDF, JPG, PNG, DOC</p>
+          <p className="mt-1 text-xs text-gray-500">Supported formats: PDF, JPG, PNG, DOC. You can select multiple files.</p>
+          
+          {files.length > 0 && (
+            <div className="mt-2">
+              <p className="text-sm font-medium text-gray-700">Selected files:</p>
+              <ul className="list-disc pl-5 text-sm text-gray-600">
+                {Array.from(files).map((file, index) => (
+                  <li key={index}>{file.name} ({(file.size / 1024).toFixed(2)} KB)</li>
+                ))}
+              </ul>
+            </div>
+          )}
           
           {isUploading && (
             <div className="mt-2">
