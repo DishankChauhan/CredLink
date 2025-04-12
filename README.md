@@ -1,6 +1,6 @@
-# VerifyChain - Blockchain Resume Verification System
+# CredLink - Blockchain Resume Verification System
 
-VerifyChain is a decentralized application for verifying educational and professional credentials using blockchain technology.
+CredLink is a decentralized application for verifying educational and professional credentials using blockchain technology.
 
 ## Features
 
